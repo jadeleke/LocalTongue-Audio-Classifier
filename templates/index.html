@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Language Classifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white shadow-xl rounded-2xl p-8 max-w-md w-full">
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">Language Classifier</h1>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-4">
+            <input type="file" name="file" accept=".wav,.mp3" required
+                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-blue-50 file:text-blue-700
+                          hover:file:bg-blue-100">
+            <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl transition">
+                Predict
+            </button>
+        </form>
+
+        {% if filename %}
+            <div class="mt-8 p-4 bg-gray-50 rounded-xl border">
+                <h2 class="text-lg font-semibold text-gray-700 mb-2">Prediction Result</h2>
+                <p><span class="font-medium text-gray-600">File:</span> {{ filename }}</p>
+                <p><span class="font-medium text-gray-600">Predicted Language:</span> {{ label }}</p>
+                <p><span class="font-medium text-gray-600">Confidence:</span> {{ '%.2f'|format(confidence) }}%</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
