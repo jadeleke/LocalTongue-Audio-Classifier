@@ -1,102 +1,115 @@
 # LocalTongue Audio Classifier
 
-A Flask web application that predicts the local language spoken in an uploaded audio file. The current model classifies audio into three labels:
+A Flask web application that identifies the local African language spoken in an uploaded audio file. Upload a `.wav` or `.mp3` clip and the app returns the predicted language and a confidence score — no account or API key required.
 
-- Akan
-- Dagbani
-- Ikposo
-
-The app accepts `.wav` and `.mp3` files, converts audio into mel-spectrogram features, and runs the trained TensorFlow/Keras model to return the predicted language and confidence score.
-
-## GitHub Repository
-
-This project is published at:
-
-```text
-https://github.com/jadeleke/LocalTongue-Audio-Classifier
-```
-
-Clone it with:
-
-```powershell
-git clone https://github.com/jadeleke/LocalTongue-Audio-Classifier.git
-cd LocalTongue-Audio-Classifier
-```
-
-## Features
-
-- Browser-based audio upload form
-- Supports WAV and MP3 audio files
-- Uses a trained Keras multiclass model
-- Extracts 15-second log mel-spectrogram features with `librosa`
-- Displays the predicted language and confidence percentage
-
-## Project Structure
-
-```text
-.
-|-- app.py
-|-- requirements.txt
-|-- multiclass_model_aug_3_lang.keras
-|-- templates/
-|   `-- index.html
-|-- static/
-|   `-- style.css
-|-- model/
-`-- uploads/
-```
-
-## Requirements
-
-- Python 3.10 recommended
-- FFmpeg installed and available on your system path for MP3 support through `pydub`
-
-Python dependencies are listed in `requirements.txt`.
-
-## Setup
-
-Create and activate a virtual environment:
-
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```powershell
-pip install -r requirements.txt
-```
-
-Make sure the model file exists at the project root:
-
-```text
-multiclass_model_aug_3_lang.keras
-```
-
-## Run the App
-
-```powershell
-python app.py
-```
-
-Then open the local Flask URL shown in the terminal, usually:
-
-```text
-http://127.0.0.1:5000
-```
+**Supported languages:** Akan · Dagbani · Ikposo
 
 ## How It Works
 
-1. A user uploads a `.wav` or `.mp3` file.
-2. MP3 files are converted to WAV internally.
-3. The app loads up to 15 seconds of audio at 16 kHz.
-4. `librosa` extracts a log mel-spectrogram.
-5. The TensorFlow model predicts one of the supported language labels.
-6. The result is shown in the browser with a confidence score.
+1. User uploads a `.wav` or `.mp3` file (max 20 MB, up to 15 seconds used)
+2. MP3 files are converted to WAV internally via `pydub`
+3. Audio is resampled to 16 kHz mono and a log mel-spectrogram is extracted with `librosa`
+4. A trained TensorFlow/Keras multiclass model classifies the spectrogram
+5. The predicted language and confidence percentage are displayed in the browser
 
-## Notes
+## Quick Start
 
-- Uploaded files are stored in the `uploads/` directory, which is ignored by Git.
-- The model path and supported labels are configured in `app.py`.
-- If MP3 uploads fail, verify that FFmpeg is installed and accessible from the command line.
+**Prerequisites:** Python 3.9+ and [FFmpeg](https://ffmpeg.org/download.html) on your PATH (required for MP3 support).
+
+```bash
+git clone https://github.com/jadeleke/LocalTongue-Audio-Classifier.git
+cd LocalTongue-Audio-Classifier
+
+python -m venv venv
+# Windows
+.\venv\Scripts\Activate.ps1
+# macOS / Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+python app.py
+```
+
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
+
+> The model file `multiclass_model_aug_3_lang.keras` must be present at the project root before starting the app.
+
+## Production Deployment
+
+Use Gunicorn instead of the Flask dev server and set a strong secret key:
+
+```bash
+export SECRET_KEY="your-random-secret-here"
+gunicorn -w 2 -b 0.0.0.0:8000 app:app
+```
+
+A `SECRET_KEY` warning is logged at startup if the environment variable is not set.
+
+## Health Check
+
+```
+GET /health
+```
+
+Returns:
+
+```json
+{
+  "status": "ok",
+  "model": "multiclass_model_aug_3_lang.keras",
+  "labels": ["Akan", "Dagbani", "Ikposo"]
+}
+```
+
+Useful for load balancers and uptime monitors.
+
+## Running Tests
+
+Tests mock all heavy dependencies (TensorFlow, librosa, pydub) so they run without a GPU or the model file.
+
+```bash
+pip install pytest pytest-flask flask-wtf
+pytest tests/ -v
+```
+
+## Project Structure
+
+```
+LocalTongue-Audio-Classifier/
+├── app.py                              # Flask application
+├── requirements.txt                    # Python dependencies
+├── pytest.ini                          # Test configuration
+├── conftest.py                         # Pytest path setup
+├── multiclass_model_aug_3_lang.keras   # Trained Keras model (not in git)
+├── templates/
+│   └── index.html                      # Upload form and results page
+├── static/
+│   └── style.css
+├── tests/
+│   └── test_app.py                     # 21 unit + integration tests
+├── .github/
+│   └── workflows/
+│       └── ci.yml                      # GitHub Actions CI (Python 3.9–3.11)
+└── uploads/                            # Temporary upload directory (git-ignored)
+```
+
+## Configuration
+
+All tunable values live at the top of `app.py`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `MODEL_PATH` | `multiclass_model_aug_3_lang.keras` | Path to the Keras model (overridable via `MODEL_PATH` env var) |
+| `SR` | `16000` | Audio sample rate (Hz) |
+| `DURATION` | `15` | Max audio duration used (seconds) |
+| `N_MELS` | `32` | Number of mel bands |
+| `MAX_CONTENT_LENGTH` | `20 MB` | Maximum upload size |
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `FileNotFoundError: Model not found` | Place `multiclass_model_aug_3_lang.keras` in the project root, or set `MODEL_PATH` env var |
+| MP3 upload fails | Install FFmpeg and ensure it is on your system PATH |
+| `SECRET_KEY` warning in logs | Set the `SECRET_KEY` environment variable before starting the app |
+| CSRF error on form submit | Ensure cookies are enabled in your browser |
