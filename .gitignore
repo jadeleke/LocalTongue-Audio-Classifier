@@ -1,9 +1,33 @@
+# Uploads
 uploads/
-__pycache__/
-venv/
+
+# Python
+**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
-.env
-.DS_Store
+
+# Virtual environments
 venv/
+.venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# Model files (large binaries — store separately)
+*.keras
+*.h5
+
+# Testing / tooling
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
